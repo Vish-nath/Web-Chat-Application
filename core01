@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Chat Application</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    .chat-container {
+      width: 60%;
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    #chat-box {
+      height: 400px;
+      overflow-y: auto;
+      border-bottom: 2px solid #ddd;
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+
+    .message {
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      border-radius: 10px;
+      outline: none;
+      border: 1px solid #ddd;
+    }
+
+    #send-button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #send-button:hover {
+      background-color: #0056b3;
+    }
+
+    .room-select {
+      margin-bottom: 20px;
+    }
+
+    .message strong {
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Join Room Section -->
+  <div class="container" id="join-section">
+    <h1>Join Chat Room</h1>
+    <input type="text" id="username" placeholder="Enter your username">
+    <select id="room-select" class="room-select">
+      <option value="General">General</option>
+      <option value="Gaming">Gaming</option>
+      <option value="Coding">Coding</option>
+    </select>
+    <button onclick="joinRoom()">Join Room</button>
+  </div>
+
+  <!-- Chat Room Section -->
+  <div class="chat-container" id="chat-section" style="display: none;">
+    <h2 id="room-title">Room: </h2>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button id="send-button">Send</button>
+  </div>
+
+  <!-- Socket.io CDN -->
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+  <script>
+    const socket = io('http://localhost:3000');
+
+    const joinSection = document.getElementById('join-section');
+    const chatSection = document.getElementById('chat-section');
+    const roomTitle = document.getElementById('room-title');
+    const chatBox = document.getElementById('chat-box');
+    const messageInput = document.getElementById('message-input');
+
+    let username = '';
+    let room = '';
+
+    // Function to join room
+    function joinRoom() {
+      username = document.getElementById('username').value;
+      room = document.getElementById('room-select').value;
+
+      if (username.trim() !== '') {
+        socket.emit('joinRoom', { username, room });
+        roomTitle.innerText = `Room: ${room}`;
+        joinSection.style.display = 'none';
+        chatSection.style.display = 'block';
+      }
+    }
+
+    // Send message event
+    document.getElementById('send-button').addEventListener('click', sendMessage);
+
+    function sendMessage() {
+      const message = messageInput.value;
+      if (message.trim() !== '') {
+        socket.emit('sendMessage', { message, room, username });
+        messageInput.value = '';
+      }
+    }
+
+    // Receive and display message
+    socket.on('message', (data) => {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message');
+      messageElement.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+      chatBox.appendChild(messageElement);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+
+</body>
+</html>
